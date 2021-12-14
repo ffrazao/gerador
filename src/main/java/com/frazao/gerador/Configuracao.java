@@ -3,14 +3,14 @@ package com.frazao.gerador;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.frazao.gerador.impl.GerarManipuladorBancoDadosImpl;
+import com.frazao.gerador.impl.GerarSistemaImpl;
 
 @Configuration
 public class Configuracao {
 	
 	@Bean
-	public GerarManipuladorBancoDados geradorJPABean() {
-		return new GerarManipuladorBancoDadosImpl();
+	public GerarSistema geradorJPABean() {
+		return new GerarSistemaImpl();
 	}
 
 }

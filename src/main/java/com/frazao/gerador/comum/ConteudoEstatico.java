@@ -3,11 +3,12 @@ package com.frazao.gerador.comum;
 import java.io.File;
 import java.net.URL;
 
+import com.frazao.gerador.GerarSistema;
+
 public class ConteudoEstatico extends ManipulaArquivo {
 
-	public ConteudoEstatico(String localSaida, String pacotePadrao) {
-		this.localSaida = localSaida;
-		this.pacotePadrao = pacotePadrao;
+	public ConteudoEstatico(GerarSistema gerarSistema) {
+		super(gerarSistema);
 	}
 
 	@Override
@@ -25,9 +26,9 @@ public class ConteudoEstatico extends ManipulaArquivo {
 
 		// copiar conteúdo estático
 		origem = "estatico";
-		destino = String.format("%s%s%s%s", this.localSaida,
+		destino = String.format("%s%s%s%s.%s.%s", this.localSaida,
 				this.localSaida.endsWith(File.separator) ? "" : File.separator, DIRETORIO_FONTE_JAVA,
-				this.pacotePadrao.replaceAll("\\.", File.separator));
+				this.pacotePadrao.replaceAll("\\.", File.separator), this.gerarSistema.getNomeSistema(), this.gerarSistema.getPacoteOrganizador());
 		url = this.getClass().getClassLoader().getResource(origem);
 		copiaDiretorio(new File(url.toURI()), new File(destino));
 	}

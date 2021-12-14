@@ -8,8 +8,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -177,12 +177,11 @@ public class BancoDados {
 		return this.connection;
 	}
 
-	public List<DefinicaoTabela> getDefinicaoBancoDados(Set<String> filtroSet, Set<String[]> excluiFiltroSet)
-			throws Exception {
-		return this.getDefinicaoBancoDados(filtroSet, excluiFiltroSet, true, true);
+	public List<DefinicaoTabela> getDefinicaoBancoDados() throws Exception {
+		return this.getDefinicaoBancoDados(this.informacaoConexao.getFiltroAdicionaList(), this.informacaoConexao.getFiltroExcluiList(), true, true);
 	}
 
-	private List<DefinicaoTabela> getDefinicaoBancoDados(Set<String> filtroSet, Set<String[]> excluiFiltroSet,
+	private List<DefinicaoTabela> getDefinicaoBancoDados(Collection<String> filtroSet, Collection<String> excluiFiltroSet,
 			boolean captarPropriedades, boolean captarRelacionamentos) throws Exception {
 
 		final List<DefinicaoTabela> result = new ArrayList<>();
@@ -259,7 +258,8 @@ public class BancoDados {
 					coluna.set(metaReg.getString(4));
 
 					// verificar se o registro deve ser IGNORADO
-					for (String[] f : excluiFiltroSet) {
+					for (String fe : excluiFiltroSet) {
+						String f[] = fe.split(".");
 						if ((f.length == 3
 								&& (f[0] == null || f[0].isBlank() || f[0].equals("%") || f[0].equals(esquema.get()))
 								&& (f[1] == null || f[1].isBlank() || f[1].equals("%") || f[1].equals(tabela.get()))

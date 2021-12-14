@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import com.frazao.gerador.GerarSistema;
+
 public class GeradorEntidade extends ManipulaArquivo {
 	
 	private static final String NOME_PACOTE_FUNCIONALIDADE = "entidade"; 
@@ -16,13 +18,20 @@ public class GeradorEntidade extends ManipulaArquivo {
 
 	private Set<String> importacaoEntidade;
 	private InformacaoConexao informacaoConexao;
+	
+	
+	protected String nomeSistema;
 
-	public GeradorEntidade(InformacaoConexao informacaoConexao, List<DefinicaoTabela> definicaoTabelaList,
-			String localSaida, String pacotePadrao) {
+	protected String pacoteOrganizador;
+
+
+	public GeradorEntidade(GerarSistema gerarSistema) {
+		super(gerarSistema);
+		this.nomeSistema = nomeSistema;
+		this.pacoteOrganizador = pacoteOrganizador;
+
 		this.informacaoConexao = informacaoConexao;
 		this.definicaoTabelaList = definicaoTabelaList;
-		this.localSaida = localSaida;
-		this.pacotePadrao = pacotePadrao;
 
 		this.importacaoBasica.add("import java.util.*;");
 		this.importacaoBasica.add("import javax.persistence.*;");

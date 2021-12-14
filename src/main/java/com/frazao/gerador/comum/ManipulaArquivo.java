@@ -12,7 +12,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+import com.frazao.gerador.GerarSistema;
+
 public abstract class ManipulaArquivo {
+	
+	protected GerarSistema gerarSistema;
+	
+	public ManipulaArquivo(GerarSistema gerarSistema) {
+		this.gerarSistema = gerarSistema;
+	}
 
 	protected static final String DIRETORIO_FONTE_JAVA = "src" + File.separator + "main" + File.separator + "java"
 			+ File.separator;
