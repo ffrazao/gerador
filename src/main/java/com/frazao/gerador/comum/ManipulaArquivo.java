@@ -15,24 +15,14 @@ import java.util.Optional;
 import com.frazao.gerador.GerarSistema;
 
 public abstract class ManipulaArquivo {
-	
+
 	protected GerarSistema gerarSistema;
-	
+
 	public ManipulaArquivo(GerarSistema gerarSistema) {
 		this.gerarSistema = gerarSistema;
 	}
 
-	protected static final String DIRETORIO_FONTE_JAVA = "src" + File.separator + "main" + File.separator + "java"
-			+ File.separator;
-
-	protected static final String DIRETORIO_FONTE_RESOUCES = "src" + File.separator + "main" + File.separator
-			+ "resources" + File.separator;
-
-	protected String localSaida;
-
-	protected String pacotePadrao;
-
-	protected void copiaDiretorio(File diretorioOrigem, File diretorioDestino) throws Exception {
+	public static void copiaDiretorio(File diretorioOrigem, File diretorioDestino) throws Exception {
 		if (!diretorioDestino.exists()) {
 			diretorioDestino.mkdirs();
 		}
@@ -42,7 +32,7 @@ public abstract class ManipulaArquivo {
 		}
 	}
 
-	private void copiarDiretorioCompativel(File source, File destination) throws Exception {
+	private static void copiarDiretorioCompativel(File source, File destination) throws Exception {
 		if (source.isDirectory()) {
 			copiaDiretorio(source, destination);
 		} else {
@@ -50,7 +40,7 @@ public abstract class ManipulaArquivo {
 		}
 	}
 
-	protected void copiarArquivo(File sourceFile, File destinationFile) throws Exception {
+	public static void copiarArquivo(File sourceFile, File destinationFile) throws Exception {
 		try (InputStream in = new FileInputStream(sourceFile);
 				OutputStream out = new FileOutputStream(destinationFile)) {
 			byte[] buf = new byte[1024];
@@ -65,12 +55,12 @@ public abstract class ManipulaArquivo {
 
 	public abstract void executar() throws Exception;
 
-	protected Optional<String> getExtensaoArquivo(String filename) {
+	protected static Optional<String> getExtensaoArquivo(String filename) {
 		return Optional.ofNullable(filename).filter(f -> f.contains("."))
 				.map(f -> f.substring(filename.lastIndexOf(".") + 1));
 	}
 
-	private void isArquivoJava(File destinationFile) throws Exception {
+	private static void isArquivoJava(File destinationFile) throws Exception {
 		getExtensaoArquivo(destinationFile.getName()).ifPresent(f -> {
 			if (f.endsWith("java")) {
 				try {
@@ -82,25 +72,27 @@ public abstract class ManipulaArquivo {
 		});
 	}
 
-	private void modificarPacote(File destinationFile) throws Exception {
+	private static void modificarPacote(File destinationFile) throws Exception {
 		// /saida/src/main/java/br/gov/df/seagri/migracao/entidade/Entidade.java
 		String pacote = pegaNomePacote(destinationFile);
 		Charset charset = StandardCharsets.UTF_8;
 
 		// abrir o arquivo
 		Path path = Paths.get(destinationFile.getPath());
-		
+
 		String content = new String(Files.readAllBytes(path), charset);
-		
+
 		content = content.replaceAll("package(.?)*;", String.format("package %s;", pacote));
 
 		// atualizar o arquivo
 		Files.write(path, content.getBytes(charset));
 	}
 
-	private String pegaNomePacote(File destinationFile) {
+	private static String pegaNomePacote(File destinationFile) {
 		String result = destinationFile.getPath()
-				.substring(destinationFile.getPath().indexOf(DIRETORIO_FONTE_JAVA) + DIRETORIO_FONTE_JAVA.length(),
+				.substring(
+						destinationFile.getPath().indexOf(GerarSistema.DIRETORIO_FONTE_JAVA)
+								+ GerarSistema.DIRETORIO_FONTE_JAVA.length(),
 						destinationFile.getPath().lastIndexOf(destinationFile.getName()))
 				.replaceAll(File.separator, ".");
 		result = result.endsWith(".") ? result.substring(0, result.length() - 1) : result;
@@ -108,8 +100,8 @@ public abstract class ManipulaArquivo {
 		return result;
 	}
 
-	protected void salvarArquivoJava(File localBase, String nomePacote, String nomeClasse, String conteudoArquivoJava)
-			throws Exception {
+	public static void salvarArquivoJava(File localBase, String nomePacote, String nomeClasse,
+			String conteudoArquivoJava) throws Exception {
 		Charset charset = StandardCharsets.UTF_8;
 
 		// abrir o arquivo
@@ -123,6 +115,22 @@ public abstract class ManipulaArquivo {
 
 		// atualizar o arquivo
 		Files.write(java.toPath(), conteudoArquivoJava.getBytes(charset));
+	}
+
+	public static void salvarArquivo(File diretorio, String nomeArquivo, String conteudoArquivo) throws Exception {
+		Charset charset = StandardCharsets.UTF_8;
+
+		// abrir o arquivo
+		Path path = Paths.get(diretorio.toURI());
+		
+		if (!path.toFile().exists()) {
+			path.toFile().mkdirs();
+		}
+
+		File java = new File(path.toFile(), nomeArquivo);
+
+		// atualizar o arquivo
+		Files.write(java.toPath(), conteudoArquivo.getBytes(charset));
 	}
 
 }

@@ -35,7 +35,7 @@ public class DefinicaoTabela extends Definicao implements Comparable<DefinicaoTa
 
 	@Override
 	public int compareTo(DefinicaoTabela o) {
-		return this.getNomeEsquema().compareTo(o.getNomeEsquema()) + this.getNomeTabela().compareTo(o.getNomeTabela());
+		return this.getEsquema().compareTo(o.getEsquema()) + this.getTabela().compareTo(o.getTabela());
 	}
 
 	public Set<DefinicaoEstruturaDados> getChavePrimariaList() {
@@ -57,34 +57,41 @@ public class DefinicaoTabela extends Definicao implements Comparable<DefinicaoTa
 		}
 		return result;
 	}
-
-	@Override
-	public String getNomeClasseCompletoJava() {
-		return String.format("%s.%s", this.getNomePacoteJava(), this.getNomeClasseJava());
+	
+	public boolean isChavePrimariaComposta() {
+		if (this.getChavePrimariaList().size() == 0) {
+			throw new IllegalStateException("Informações inconsistentes");
+		}
+		return this.getChavePrimariaList().size() > 1;
 	}
 
-	@Override
-	public String getNomeClasseJava() {
-		return converterCase(this.getNomeTabela(), true);
-	}
-
-	@Override
-	public String getNomeEsquema() {
+	@EqualsAndHashCode.Include
+	public String getEsquema() {
 		return this.estruturaList.get(0).getEsquema();
 	}
 
 	@Override
-	public String getNomeObjetoJava() {
-		return converterCase(this.getNomeTabela(), false);
+	public String getNomeJavaClasse() {
+		return this.estruturaList.get(0).getNomeJavaClasse();
 	}
 
 	@Override
-	public String getNomePacoteJava() {
-		return this.getNomeEsquema().toLowerCase();
+	public String getNomeJavaClasseCompleto() {
+		return this.estruturaList.get(0).getNomeJavaClasseCompleto();
 	}
 
 	@Override
-	public String getNomeTabela() {
+	public String getNomeJavaObjeto() {
+		return this.estruturaList.get(0).getNomeJavaObjeto();
+	}
+
+	@Override
+	public String getNomeJavaPacote() {
+		return this.estruturaList.get(0).getNomeJavaPacote();
+	}
+
+	@EqualsAndHashCode.Include
+	public String getTabela() {
 		return this.estruturaList.get(0).getTabela();
 	}
 

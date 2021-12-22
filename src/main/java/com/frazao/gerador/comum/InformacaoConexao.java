@@ -1,26 +1,25 @@
 package com.frazao.gerador.comum;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.TreeSet;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Setter;
 
 @Data
-@Builder
-public class InformacaoConexao {
+@EqualsAndHashCode
+public class InformacaoConexao implements Comparable<InformacaoConexao> {
 
 	private String driver;
 
 	@Setter(AccessLevel.NONE)
-	private final Collection<String> filtroAdicionaList = new ArrayList<>();
+	private final Collection<String> filtroAdicionaList = new TreeSet<>();
 
 	@Setter(AccessLevel.NONE)
-	private final Collection<String> filtroExcluiList = new ArrayList<>();
+	private final Collection<String> filtroExcluiList = new TreeSet<>();
 
 	private String nomeBanco;
 
@@ -29,20 +28,30 @@ public class InformacaoConexao {
 	private String url;
 
 	private String username;
+	
+	private boolean somenteTabelas = false;
 
 	public InformacaoConexao(String nomeBanco, String driver, String url, String username, String password) {
-		this(nomeBanco, driver, url, username, password, Arrays.asList("%"), Arrays.asList("information_schema"));
+		this(nomeBanco, driver, url, username, password, null, null);
+	}
+
+	public InformacaoConexao(String nomeBanco, String driver, String url, String username, String password, Collection<String> adicionaFiltroList) {
+		this(nomeBanco, driver, url, username, password, adicionaFiltroList, null);
 	}
 
 	public InformacaoConexao(String nomeBanco, String driver, String url, String username, String password,
-			List<String> adicionaFiltroList, List<String> excluiFiltroList) {
+			Collection<String> adicionaFiltroList, Collection<String> excluiFiltroList) {
 		this.nomeBanco = nomeBanco;
 		this.driver = driver;
 		this.url = url;
 		this.username = username;
 		this.password = password;
-		this.filtroAdicionaList.addAll(adicionaFiltroList);
-		this.filtroExcluiList.addAll(adicionaFiltroList);
+		this.filtroAdicionaList.addAll((adicionaFiltroList == null || adicionaFiltroList.isEmpty()) ? Arrays.asList("%") : adicionaFiltroList);
+		if (excluiFiltroList != null) {			
+			this.filtroExcluiList.addAll(excluiFiltroList);
+		}
+		// excluir schemas padrão de bancos de dados
+		this.filtroExcluiList.addAll(Arrays.asList("information_schema", "pg_catalog"));
 	}
 
 	public PlataformaBanco getPlataformaBanco() {
@@ -87,6 +96,11 @@ public class InformacaoConexao {
 
 	public void filtroExcluiListClear() {
 		this.filtroExcluiList.clear();
+	}
+
+	@Override
+	public int compareTo(InformacaoConexao o) {
+		return this.nomeBanco.compareTo(o.nomeBanco);
 	}
 
 }

@@ -1,4 +1,4 @@
-package entidade;
+package aqui;
 
 public interface EntidadeBaseId<Id> extends EntidadeBase {
 	

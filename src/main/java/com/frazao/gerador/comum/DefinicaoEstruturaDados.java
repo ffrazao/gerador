@@ -12,11 +12,18 @@ import lombok.Setter;
 @EqualsAndHashCode(callSuper = false)
 public class DefinicaoEstruturaDados extends Definicao implements Comparable<DefinicaoEstruturaDados> {
 
+	@Setter(AccessLevel.NONE)
 	private String coluna;
+
+	@Setter(AccessLevel.NONE)
 	private String esquema;
+
 	@Setter(AccessLevel.NONE)
 	private Map<String, Object> propriedadeList = new HashMap<>();
+
 	private DefinicaoEstruturaDados referencia;
+
+	@Setter(AccessLevel.NONE)
 	private String tabela;
 
 	public DefinicaoEstruturaDados(String esquema, String tabela, String coluna) {
@@ -31,36 +38,39 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 
 	@Override
 	public int compareTo(DefinicaoEstruturaDados o) {
-		return this.getEsquema().compareTo(o.getEsquema()) + this.getTabela().compareTo(o.getTabela())
-				+ this.getColuna().compareTo(o.getColuna());
+		return this.esquema.compareTo(o.esquema) + this.tabela.compareTo(o.tabela) + this.coluna.compareTo(o.coluna);
 	}
 
-	public String getNomeClasseCompletoJava() {
-		return String.format("%s.%s", this.getNomePacoteJava(), this.getNomeClasseJava());
+	public String getNomeJavaClasseCompleto() {
+		return String.format("%s.%s", this.getNomeJavaPacote(), this.getNomeJavaClasse());
 	}
 
-	public String getNomeClasseJava() {
-		return converterCase(this.getNomeTabela(), true);
+	public String getNomeJavaClasse() {
+		return converterCase(this.getTabela(), true);
 	}
 
-	public String getNomeEsquema() {
-		return this.getEsquema();
+	public String getNomeJavaObjeto() {
+		return converterCase(this.getTabela(), false);
 	}
 
-	public String getNomeObjetoJava() {
-		return converterCase(this.getNomeTabela(), false);
+	public String getNomeJavaPacote() {
+		switch (this.getEsquema().toLowerCase()) {
+		case "public":
+			return "_public";
+		default:
+			return this.getEsquema().toLowerCase();
+		}
 	}
 
-	public String getNomePacoteJava() {
-		return this.getNomeEsquema().toLowerCase();
-	}
-
-	public String getNomePropriedade() {
-		return converterCase(this.getColuna(), false);
-	}
-
-	public String getNomeTabela() {
-		return this.getTabela();
+	public String getNomeJavaPropriedade() {
+		switch (converterCase(this.coluna, false)) {
+		case "class":
+			return "_class";
+		case "default":
+			return "_default";
+		default:
+			return converterCase(this.coluna, false);
+		}
 	}
 
 	public Object getPropriedade(String nome) {
@@ -69,13 +79,13 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 
 	public String getTipoPropriedade() {
 		if (isChaveEstrangeira()) {
-			return String.format("%s", this.getReferencia().getNomeClasseCompletoJava());
+			return String.format("%s", this.getReferencia().getNomeJavaClasseCompleto());
 		} else {
 			String tipo = (String) this.getPropriedade("TYPE_NAME");
 			if (tipo == null) {
-				System.out.println("erro");
+				throw new RuntimeException("erro");
 			}
-			System.out.println("~>" + tipo);
+//			System.out.println("~>" + tipo);
 			switch (tipo) {
 			case "_bool":
 			case "bool":
@@ -153,8 +163,8 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 
 	@Override
 	public String toString() {
-		return String.format("%s.%s.%s\n", this.getEsquema(), this.getTabela(),
-				this.getColuna() + (this.isChavePrimaria() ? "[pk]" : "") + (this.isChaveEstrangeira() ? "[fk]" : ""));
+		return String.format("%s.%s.%s\n", this.esquema, this.tabela,
+				this.coluna + (this.isChavePrimaria() ? "[pk]" : "") + (this.isChaveEstrangeira() ? "[fk]" : ""));
 	}
 
 }

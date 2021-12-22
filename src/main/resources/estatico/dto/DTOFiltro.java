@@ -1,6 +1,6 @@
-package entidade;
+package aqui;
 
-public interface FiltroDto extends Dto {
+public interface DTOFiltro extends DTO {
 
 	Integer getPagina();
 

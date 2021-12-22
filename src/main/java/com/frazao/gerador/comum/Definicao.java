@@ -2,7 +2,7 @@ package com.frazao.gerador.comum;
 
 public abstract class Definicao {
 
-	protected String converterCase(String nome, boolean primeiraTambem) {
+	public static String converterCase(String nome, boolean primeiraTambem) {
 		String[] words = nome.split("[\\W_]+");
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < words.length; i++) {
@@ -17,16 +17,12 @@ public abstract class Definicao {
 		return result.toString();
 	}
 	
-	public abstract String getNomeEsquema();
+	public abstract String getNomeJavaPacote();
 
-	public abstract String getNomePacoteJava();
+	public abstract String getNomeJavaClasse();
 
-	public abstract String getNomeTabela();
+	public abstract String getNomeJavaObjeto();
 
-	public abstract String getNomeClasseJava();
-
-	public abstract String getNomeObjetoJava();
-
-	public abstract String getNomeClasseCompletoJava();	
+	public abstract String getNomeJavaClasseCompleto();	
 	
 }
