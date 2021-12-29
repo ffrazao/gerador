@@ -9,13 +9,15 @@ import lombok.EqualsAndHashCode;
 import lombok.Setter;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class DefinicaoEstruturaDados extends Definicao implements Comparable<DefinicaoEstruturaDados> {
 
 	@Setter(AccessLevel.NONE)
+	@EqualsAndHashCode.Include
 	private String coluna;
 
 	@Setter(AccessLevel.NONE)
+	@EqualsAndHashCode.Include
 	private String esquema;
 
 	@Setter(AccessLevel.NONE)
@@ -24,6 +26,7 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 	private DefinicaoEstruturaDados referencia;
 
 	@Setter(AccessLevel.NONE)
+	@EqualsAndHashCode.Include
 	private String tabela;
 
 	public DefinicaoEstruturaDados(String esquema, String tabela, String coluna) {
@@ -150,11 +153,7 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 	}
 
 	public boolean isChaveEstrangeira() {
-		if (this.getReferencia() != null) {
-			return true;
-		} else {
-			return false;
-		}
+		return this.getReferencia() == null ? false : true;
 	}
 
 	public boolean isChavePrimaria() {

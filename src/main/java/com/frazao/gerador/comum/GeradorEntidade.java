@@ -133,9 +133,6 @@ public class GeradorEntidade extends ManipulaArquivo {
 							id.append(String.format("\t@Column(name = \"%s\")", primeiraDed.getColuna())).append("\n");
 							id.append(String.format("\tprivate %s %s;", "Long"/*primeiraDed.getTipoPropriedade()*/, primeiraDed.getNomeJavaPropriedade())).append("\n");
 						} else {
-							if (dt.getTabela().equals("diaria_realizada")) {
-								System.out.println("aqui");
-							}
 							id.append(String.format("\t@Column(name = \"%s\")", primeiraDed.getColuna())).append("\n");
 							DefinicaoTabela tabRef = null;
 							String esquemaTmp = primeiraDed.getReferencia().getEsquema();
@@ -173,6 +170,7 @@ public class GeradorEntidade extends ManipulaArquivo {
 				// chaves externas
 				Set<DefinicaoTabela> tabRefSet = new HashSet<>();
 				
+				// adicionar campos e referencias
 				for (DefinicaoEstruturaDados ded : dt.getDemaisCamposList()) {
 					demais.append("").append("\n");
 					// se for uma foreign key
@@ -200,7 +198,53 @@ public class GeradorEntidade extends ManipulaArquivo {
 						demais.append(String.format("\tprivate %s %s;", ded.getTipoPropriedade(), ded.getNomeJavaPropriedade())).append("\n");
 					}
 				}
-				// acessorios
+				
+				// adicionar one to many
+				if (!dt.getDadosAcessorios().isEmpty()) {
+					importacaoEntidade.add(String.format("import %s;", "java.util.List"));
+					
+					Set<DefinicaoEstruturaDados> campoExportadoSet = new HashSet<>();
+					for (DefinicaoEstruturaDados ded : dt.getDadosAcessorios()) {
+						DefinicaoTabela tabRef = this.getDefnicaoTabela(informacaoConexaoMapa.getValue(), ded.getEsquema(), ded.getTabela());
+						DefinicaoEstruturaDados campoExportado = null;
+						
+						// verificar se a classe é referenciada mais de uma vez
+						boolean usarNomeETipo = dt.getDadosAcessorios().stream().filter(c -> c.getEsquema().equals(ded.getEsquema()) && c.getTabela().equals(ded.getTabela()) && !c.getColuna().equals(ded.getColuna())).count() > 0;
+						boolean usarReferenciaCompleta = dt.getDadosAcessorios().stream().filter(c -> !c.getEsquema().equals(ded.getEsquema()) && c.getTabela().equals(ded.getTabela())).count() > 0;
+												 
+						for (DefinicaoEstruturaDados campo: tabRef.getEstruturaList()) {
+							if (campo.isChaveEstrangeira() && campo.getReferencia().getEsquema().equals(dt.getEsquema()) && campo.getReferencia().getTabela().equals(dt.getTabela())) {
+								if (campoExportadoSet.add(campo)) {									
+									campoExportado = campo;
+									break;
+								}
+							}
+						}
+						
+						if (campoExportado == null) {
+							// indica que o FK é repetida, ou seja, referencia duas vezes o mesmo conj de dados
+							continue;
+						}
+						importacaoEntidade.add(String.format("import %s.%s;", nomePacoteBase, ded.getNomeJavaClasseCompleto()));
+
+						demais.append("").append("\n");
+						demais.append(String.format("\t@OneToMany(mappedBy = \"%s\")", campoExportado.getNomeJavaPropriedade())).append("\n");
+						String nomeTipo = usarReferenciaCompleta ? String.format("%s.%s", nomePacoteBase, ded.getNomeJavaClasseCompleto()) : ded.getNomeJavaClasse();
+						String nomePropriedade = null;
+						if (usarNomeETipo) {
+							nomePropriedade = String.format("%s%s", campoExportado.getNomeJavaPropriedade(), ded.getNomeJavaClasse());
+						} else {								
+							nomePropriedade = String.format("%s", ded.getNomeJavaClasse());
+						}							
+						if (usarReferenciaCompleta) {
+							nomePropriedade = String.format("%s%s", nomePropriedade, primeiraLetra(ded.getNomeJavaClasseCompleto().replaceAll("\\.", ""), true));
+						}
+						nomePropriedade = String.format("%sList", primeiraLetra(nomePropriedade, false));						
+						demais.append(String.format("\tprivate List<%s> %s;", nomeTipo, nomePropriedade)).append("\n");
+					}
+				}
+				
+				// confeccionar estrutura da entidade
 				StringBuffer java = new StringBuffer();
 				java.append("package ").append(nomePacote).append(";").append("\n").append("\n");
 				java.append(importacaoEntidade.stream().sorted().map(Object::toString).collect(Collectors.joining("\n"))).append("\n").append("\n");
@@ -210,15 +254,21 @@ public class GeradorEntidade extends ManipulaArquivo {
 				java.append(demais).append("\n").append("\n");
 				java.append("}").append("\n").append("\n");
 
-				salvarArquivoJava(new File(this.gerarSistema.getLocalSaida()
+				File arquivo = new File(this.gerarSistema.getLocalSaida()
 						+ (this.gerarSistema.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
-						+ GerarSistema.DIRETORIO_FONTE_JAVA), nomePacote, nomeClasse, java.toString());
+						+ GerarSistema.DIRETORIO_FONTE_JAVA);
+				salvarArquivoJava(arquivo, nomePacote, nomeClasse, java.toString());
 
+				arquivoAtualizado.add(arquivo);
+				
 				System.out.println(java);
-				// arquivoAtualizado.add(dt.salvar(this.localSaida, this.pacotePadrao));
 			}
 			// excluir os arquivos q não foram atualizados
 		}
+	}
+
+	private String primeiraLetra(String palavra, boolean maiuscula) {
+		return String.format("%s%s", maiuscula ?  Character.toUpperCase(palavra.charAt(0)) : Character.toLowerCase(palavra.charAt(0)), palavra.substring(1));
 	}
 
 	private DefinicaoTabela getDefnicaoTabela(List<DefinicaoTabela> dtList, String esquema, String tabela) {

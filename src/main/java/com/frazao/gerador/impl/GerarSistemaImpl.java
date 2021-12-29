@@ -1,6 +1,7 @@
 package com.frazao.gerador.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -74,17 +75,28 @@ public class GerarSistemaImpl implements GerarSistema {
 
 			applicationYml.append(nomeBanco).append(":").append("\n");
 			applicationYml.append(" datasource:").append("\n");
-			applicationYml.append("  driver-class-name: \"").append(informacaoConexao.getDriver()).append("\"\n");
+			applicationYml.append("  lazy-initialization: true").append("\n");
+			applicationYml.append("  lazyInitialization: true").append("\n");
+			applicationYml.append("  driverClassName: \"").append(informacaoConexao.getDriver()).append("\"\n");
 			applicationYml.append("  jdbcUrl: \"").append(informacaoConexao.getUrl()).append("\"\n");
 			applicationYml.append("  username: \"").append(informacaoConexao.getUsername()).append("\"\n");
 			applicationYml.append("  password: \"").append(informacaoConexao.getPassword()).append("\"\n");
 			applicationYml.append("  jpa:").append("\n");
-			applicationYml.append("   dialect: org.hibernate.dialect.PostgreSQL10Dialect").append("\n");
-			applicationYml.append("   database-platform: org.hibernate.dialect.PostgreSQL10Dialect").append("\n");
+			switch (informacaoConexao.getPlataformaBanco()) {
+			case POSTGRES:
+				applicationYml.append("   dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+			case MYSQL:
+				applicationYml.append("   dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+			}
 			applicationYml.append("   show-sql: true").append("\n");
 			applicationYml.append("   use_sql_comments: true").append("\n");
 			applicationYml.append("   hibernate:").append("\n");
 			applicationYml.append("    ddl-auto: \"none\"").append("\n");
+			applicationYml.append("    useSqlComments: true").append("\n");
+			applicationYml.append("    formatSql: true").append("\n");
+
 			applicationYml.append("\n");
 
 			StringBuilder configDb = new StringBuilder();
@@ -141,6 +153,8 @@ public class GerarSistemaImpl implements GerarSistema {
 
 		applicationYml.append("spring:").append("\n");
 		applicationYml.append(" main:").append("\n");
+		applicationYml.append("  lazy-initialization: true").append("\n");
+		applicationYml.append("  lazyInitialization: true").append("\n");
 		applicationYml.append("  allow-bean-definition-overriding: true").append("\n");
 		applicationYml.append(" jpa:").append("\n");
 		applicationYml.append("  generate-ddl: false").append("\n");
@@ -149,8 +163,8 @@ public class GerarSistemaImpl implements GerarSistema {
 		applicationYml.append("   ddl-auto: \"none\"").append("\n");
 		applicationYml.append("  properties:").append("\n");
 		applicationYml.append("   hibernate:").append("\n");
-		applicationYml.append("    use_sql_comments: true").append("\n");
-		applicationYml.append("    format_sql: true").append("\n");
+		applicationYml.append("    useSqlComments: true").append("\n");
+		applicationYml.append("    formatSql: true").append("\n");
 		applicationYml.append("").append("\n");
 		
 		applicationYml.append("logging:").append("\n");
@@ -182,8 +196,10 @@ public class GerarSistemaImpl implements GerarSistema {
 
 	@Override
 	public GerarSistema construirRepositorio() throws Exception {
-
+		
 		String pacoteInicial = String.format("%s.%s", this.getPacotePadrao(), this.getNomeSistema());
+
+		construirBancoDadosConfig(pacoteInicial);
 
 		for (Entry<InformacaoConexao, List<DefinicaoTabela>> informacaoConexaoEntry : this.informacaoConexaoMap.entrySet()) {
 			InformacaoConexao informacaoConexao = informacaoConexaoEntry.getKey();
@@ -310,6 +326,49 @@ public class GerarSistemaImpl implements GerarSistema {
 		Files.write(path, content.getBytes(charset));
 
 		return this;
+	}
+
+	private void construirBancoDadosConfig(String pacoteInicial) throws IOException {
+
+		// construir o arquivo de configuração do banco de dados
+
+		// definição dos arquivos
+		String nomePacoteBancoDados = String.format("%s.%s", pacoteInicial, NOME_PACOTE_FUNCIONALIDADE_BANCO_DADOS);
+		String nomeClasseBancoDados = "BancoDadosConfig";
+		File diretorioBancoDados = new File(String.format("%s%s%s%s%s", this.localSaida,
+				this.getLocalSaida().endsWith(File.separator) ? "" : File.separator, DIRETORIO_FONTE_JAVA,
+				File.separator, nomePacoteBancoDados.replaceAll("\\.", File.separator)));
+		File arquivoBancoDados = new File(diretorioBancoDados, String.format("%s.java", nomeClasseBancoDados));
+
+		if (!arquivoBancoDados.exists()) {
+			if (!diretorioBancoDados.exists()) {
+				diretorioBancoDados.mkdirs();
+			}
+			StringBuilder conteudo = new StringBuilder();
+			conteudo.append(String.format("package %s;", nomePacoteBancoDados)).append("\n");
+			conteudo.append("").append("\n");
+			conteudo.append("import org.springframework.context.annotation.Bean;").append("\n");
+			conteudo.append("import org.springframework.context.annotation.Configuration;").append("\n");
+			conteudo.append("import org.springframework.transaction.PlatformTransactionManager;").append("\n");
+			conteudo.append("import org.springframework.transaction.annotation.EnableTransactionManagement;")
+					.append("\n");
+			conteudo.append("import org.springframework.transaction.jta.JtaTransactionManager;").append("\n");
+			conteudo.append("").append("\n");
+			conteudo.append("@EnableTransactionManagement").append("\n");
+			conteudo.append("@Configuration").append("\n");
+			conteudo.append(String.format("public class %s {", nomeClasseBancoDados)).append("\n");
+			conteudo.append("").append("\n");
+			conteudo.append("\t@Bean").append("\n");
+			conteudo.append("\tpublic PlatformTransactionManager platformTransactionManager() {").append("\n");
+			conteudo.append("\t\treturn new JtaTransactionManager();").append("\n");
+			conteudo.append("\t}").append("\n");
+			conteudo.append("").append("\n");
+			conteudo.append("}").append("\n");
+			conteudo.append("").append("\n");
+
+			// salvar o conteúdo do arquivo
+			Files.write(Paths.get(arquivoBancoDados.getPath()), conteudo.toString().getBytes(StandardCharsets.UTF_8));
+		}
 	}
 
 	@Override
