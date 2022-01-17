@@ -129,12 +129,12 @@ public class BancoDados {
 			if (!dbdPkList.isEmpty()) {
 				// garantir que cada coluna só possua uma única referência externa
 				if (dbdPkList.get(0).getReferencia() != null) {
-					if (!dbdPkList.get(0).getReferencia().getEsquema().equals(esquemaPk) ||
-						!dbdPkList.get(0).getReferencia().getTabela().equals(tabelaPk) ||
-						!dbdPkList.get(0).getReferencia().getColuna().equals(colunaPk)) {						
+					if (!dbdPkList.get(0).getReferencia().getEsquema().equals(esquemaPk)
+							|| !dbdPkList.get(0).getReferencia().getTabela().equals(tabelaPk)
+							|| !dbdPkList.get(0).getReferencia().getColuna().equals(colunaPk)) {
 						throw new RuntimeException("Dados inconsistentes! campo fk referenciado mais de uma vez");
 					}
-				} else {					
+				} else {
 					dbdPkList.get(0).setReferencia(new DefinicaoEstruturaDados(esquemaPk, tabelaPk, colunaPk));
 				}
 			} else {
@@ -284,7 +284,7 @@ public class BancoDados {
 
 					// percorrer o meta dado encontrado
 					principal: while (metaReg.next()) {
-						
+
 						esquema.set(metaReg.getString(1) == null ? metaReg.getString(2) : metaReg.getString(1));
 						tabela.set(metaReg.getString(3));
 						coluna.set(metaReg.getString(4));
@@ -297,12 +297,17 @@ public class BancoDados {
 							switch (this.informacaoConexao.getPlataformaBanco()) {
 							default:
 							case MYSQL:
-								break;
+								throw new IllegalArgumentException("falta implementar");
+							// break;
 							case POSTGRES:
 								StringBuilder sql = new StringBuilder();
-								sql.append("SELECT 1 FROM INFORMATION_SCHEMA.views WHERE table_schema = ? AND table_name = ?").append("\n");
+								sql.append(
+										"SELECT 1 FROM INFORMATION_SCHEMA.views WHERE table_schema = ? AND table_name = ?")
+										.append("\n");
 								sql.append("union").append("\n");
-								sql.append("SELECT 1 FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'm' AND n.nspname = ? AND c.relname = ?").append("\n");
+								sql.append(
+										"SELECT 1 FROM pg_catalog.pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'm' AND n.nspname = ? AND c.relname = ?")
+										.append("\n");
 								psView = this.connection.prepareStatement(sql.toString());
 								psView.setString(1, esquema.get());
 								psView.setString(2, tabela.get());
@@ -311,11 +316,11 @@ public class BancoDados {
 								rsView = psView.executeQuery();
 								break;
 							}
-							if (rsView != null && rsView.next()) {								
+							if (rsView != null && rsView.next()) {
 								continue;
 							}
 						}
-						
+
 						// verificar se o registro deve ser IGNORADO
 						for (String filtroExclui : excluiFiltroSet) {
 							filtroAnalise.accept(filtroExclui);
@@ -409,13 +414,7 @@ public class BancoDados {
 		if (dialect.supportsSequences()) {
 			String sql = dialect.getQuerySequencesString();
 			if (sql != null) {
-
-				Statement statement = null;
-				ResultSet rs = null;
-				try {
-					statement = conn.createStatement();
-					rs = statement.executeQuery(sql);
-
+				try (Statement statement = conn.createStatement(); ResultSet rs = statement.executeQuery(sql)) {
 					while (rs.next()) {
 						ResultSetMetaData md = rs.getMetaData();
 						StringBuffer sb = new StringBuffer();
@@ -424,13 +423,7 @@ public class BancoDados {
 						}
 						System.out.println("Sequence Name : " + sb.toString());
 					}
-				} finally {
-					if (rs != null)
-						rs.close();
-					if (statement != null)
-						statement.close();
 				}
-
 			}
 		}
 	}

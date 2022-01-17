@@ -31,8 +31,8 @@ public class ConteudoEstatico extends ManipulaArquivo {
 		destino = String.format("%s%s%s.%s.%s.%s",
 				this.gerarSistema.getLocalSaida().endsWith(File.separator) ? "" : File.separator,
 				GerarSistema.DIRETORIO_FONTE_JAVA, this.gerarSistema.getPacotePadrao(),
-				this.gerarSistema.getNomeSistema(), this.gerarSistema.NOME_PACOTE_FUNCIONALIDADE_BANCO_DADOS,
-				this.gerarSistema.NOME_PACOTE_COMUM).replaceAll("\\.", File.separator);
+				this.gerarSistema.getNomeSistema(), GerarSistema.NOME_PACOTE_FUNCIONALIDADE_BANCO_DADOS,
+				GerarSistema.NOME_PACOTE_COMUM).replaceAll("\\.", File.separator);
 		destino = this.gerarSistema.getLocalSaida() + destino;
 		url = this.getClass().getClassLoader().getResource(origem);
 		copiaDiretorio(new File(url.toURI()), new File(destino));
@@ -53,7 +53,9 @@ public class ConteudoEstatico extends ManipulaArquivo {
 		arq.append("public class Application {").append("\n");
 		arq.append("").append("\n");
 		arq.append("\tpublic static void main(String[] args) {").append("\n");
-		arq.append("\t\tSpringApplication.run(Application.class, args);").append("\n");
+		arq.append("\t\tSpringApplication app = new SpringApplication(Application.class);").append("\n");
+		arq.append("\t\tapp.setLazyInitialization(true);").append("\n");
+		arq.append("\t\tapp.run(args);").append("\n");		
 		arq.append("\t}").append("\n");
 		arq.append("").append("\n");
 		arq.append("\t@Bean").append("\n");

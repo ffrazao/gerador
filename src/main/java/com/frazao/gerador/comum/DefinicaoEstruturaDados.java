@@ -1,5 +1,6 @@
 package com.frazao.gerador.comum;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,7 +42,9 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 
 	@Override
 	public int compareTo(DefinicaoEstruturaDados o) {
-		return this.esquema.compareTo(o.esquema) + this.tabela.compareTo(o.tabela) + this.coluna.compareTo(o.coluna);
+		return Comparator.comparing(DefinicaoEstruturaDados::getEsquema)
+				.thenComparing(DefinicaoEstruturaDados::getTabela).thenComparing(DefinicaoEstruturaDados::getColuna)
+				.compare(this, o);
 	}
 
 	public String getNomeJavaClasseCompleto() {
@@ -88,7 +91,6 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 			if (tipo == null) {
 				throw new RuntimeException("erro");
 			}
-//			System.out.println("~>" + tipo);
 			switch (tipo) {
 			case "_bool":
 			case "bool":
@@ -153,7 +155,7 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 	}
 
 	public boolean isChaveEstrangeira() {
-		return this.getReferencia() == null ? false : true;
+		return this.getReferencia() != null;
 	}
 
 	public boolean isChavePrimaria() {

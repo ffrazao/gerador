@@ -2,6 +2,7 @@ package com.frazao.gerador.comum;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.TreeSet;
 
 import lombok.AccessLevel;
@@ -10,7 +11,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Setter;
 
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class InformacaoConexao implements Comparable<InformacaoConexao> {
 
 	private String driver;
@@ -21,6 +22,7 @@ public class InformacaoConexao implements Comparable<InformacaoConexao> {
 	@Setter(AccessLevel.NONE)
 	private final Collection<String> filtroExcluiList = new TreeSet<>();
 
+	@EqualsAndHashCode.Include
 	private String nomeBanco;
 
 	private String password;
@@ -100,7 +102,7 @@ public class InformacaoConexao implements Comparable<InformacaoConexao> {
 
 	@Override
 	public int compareTo(InformacaoConexao o) {
-		return this.nomeBanco.compareTo(o.nomeBanco);
+		return Comparator.comparing(InformacaoConexao::getNomeBanco).compare(this, o);
 	}
 
 }

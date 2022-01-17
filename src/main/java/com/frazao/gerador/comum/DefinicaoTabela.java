@@ -1,9 +1,10 @@
 package com.frazao.gerador.comum;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.springframework.util.CollectionUtils;
 
@@ -13,7 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Setter;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = false, onlyExplicitlyIncluded = true)
 public class DefinicaoTabela extends Definicao implements Comparable<DefinicaoTabela> {
 
 	@Setter(AccessLevel.NONE)
@@ -35,34 +36,24 @@ public class DefinicaoTabela extends Definicao implements Comparable<DefinicaoTa
 
 	@Override
 	public int compareTo(DefinicaoTabela o) {
-		return this.getEsquema().compareTo(o.getEsquema()) + this.getTabela().compareTo(o.getTabela());
+		return Comparator.comparing(DefinicaoTabela::getEsquema).thenComparing(DefinicaoTabela::getTabela).compare(this,
+				o);
 	}
 
 	public Set<DefinicaoEstruturaDados> getChavePrimariaList() {
-		Set<DefinicaoEstruturaDados> result = new TreeSet<>();
-		for (DefinicaoEstruturaDados cp : this.getEstruturaList()) {
-			if (cp.isChavePrimaria()) {
-				result.add(cp);
-			}
-		}
-		return result;
+		return this.getEstruturaList().stream().filter(e -> e.isChavePrimaria()).collect(Collectors.toSet());
 	}
 
 	public Set<DefinicaoEstruturaDados> getDemaisCamposList() {
-		Set<DefinicaoEstruturaDados> result = new TreeSet<>();
-		for (DefinicaoEstruturaDados cp : this.getEstruturaList()) {
-			if (!cp.isChavePrimaria()) {
-				result.add(cp);
-			}
-		}
-		return result;
+		return this.getEstruturaList().stream().filter(e -> !e.isChavePrimaria()).collect(Collectors.toSet());
 	}
-	
+
 	public boolean isChavePrimariaComposta() {
-		if (this.getChavePrimariaList().size() == 0) {
+		int tamanho = this.getChavePrimariaList().size();
+		if (tamanho == 0) {
 			throw new IllegalStateException("Informações inconsistentes");
 		}
-		return this.getChavePrimariaList().size() > 1;
+		return tamanho > 1;
 	}
 
 	@EqualsAndHashCode.Include

@@ -77,6 +77,14 @@ public class GerarSistemaImpl implements GerarSistema {
 			applicationYml.append(" datasource:").append("\n");
 			applicationYml.append("  lazy-initialization: true").append("\n");
 			applicationYml.append("  lazyInitialization: true").append("\n");
+			applicationYml.append("  initialization-mode: \"never\"").append("\n");
+			applicationYml.append("  initializationMode: \"never\"").append("\n");
+			applicationYml.append("  continueOnError: true").append("\n");
+		    applicationYml.append("  initialize: false").append("\n");
+		    applicationYml.append("  initialSize: 0").append("\n");
+		    applicationYml.append("  timeBetweenEvictionRunsMillis: 5000").append("\n");
+		    applicationYml.append("  minEvictableIdleTimeMillis: 5000").append("\n");
+		    applicationYml.append("  minIdle: 0").append("\n");
 			applicationYml.append("  driverClassName: \"").append(informacaoConexao.getDriver()).append("\"\n");
 			applicationYml.append("  jdbcUrl: \"").append(informacaoConexao.getUrl()).append("\"\n");
 			applicationYml.append("  username: \"").append(informacaoConexao.getUsername()).append("\"\n");
@@ -86,9 +94,11 @@ public class GerarSistemaImpl implements GerarSistema {
 			case POSTGRES:
 				applicationYml.append("   dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
 				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+				break;
 			case MYSQL:
 				applicationYml.append("   dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
 				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+				break;
 			}
 			applicationYml.append("   show-sql: true").append("\n");
 			applicationYml.append("   use_sql_comments: true").append("\n");
@@ -96,7 +106,6 @@ public class GerarSistemaImpl implements GerarSistema {
 			applicationYml.append("    ddl-auto: \"none\"").append("\n");
 			applicationYml.append("    useSqlComments: true").append("\n");
 			applicationYml.append("    formatSql: true").append("\n");
-
 			applicationYml.append("\n");
 
 			StringBuilder configDb = new StringBuilder();
@@ -152,15 +161,28 @@ public class GerarSistemaImpl implements GerarSistema {
 		}
 
 		applicationYml.append("spring:").append("\n");
+		applicationYml.append(" datasource:").append("\n");		
+		applicationYml.append("  initialization-mode: \"never\"").append("\n");
+		applicationYml.append("  initializationMode: \"never\"").append("\n");
 		applicationYml.append(" main:").append("\n");
 		applicationYml.append("  lazy-initialization: true").append("\n");
 		applicationYml.append("  lazyInitialization: true").append("\n");
+		applicationYml.append("  continueOnError: true").append("\n");
+	    applicationYml.append("  initialize: false").append("\n");
+	    applicationYml.append("  initialSize: 0").append("\n");
+	    applicationYml.append("  timeBetweenEvictionRunsMillis: 5000").append("\n");
+	    applicationYml.append("  minEvictableIdleTimeMillis: 5000").append("\n");
+	    applicationYml.append("  minIdle: 0").append("\n");
 		applicationYml.append("  allow-bean-definition-overriding: true").append("\n");
 		applicationYml.append(" jpa:").append("\n");
 		applicationYml.append("  generate-ddl: false").append("\n");
 		applicationYml.append("  show-sql: true").append("\n");
 		applicationYml.append("  hibernate:").append("\n");
 		applicationYml.append("   ddl-auto: \"none\"").append("\n");
+		applicationYml.append("   hbm2ddl:").append("\n");
+		applicationYml.append("    auto: \"none\"").append("\n");
+		applicationYml.append("   temp:").append("\n");
+        applicationYml.append("    use_jdbc_metadata_defaults: false").append("\n");
 		applicationYml.append("  properties:").append("\n");
 		applicationYml.append("   hibernate:").append("\n");
 		applicationYml.append("    useSqlComments: true").append("\n");

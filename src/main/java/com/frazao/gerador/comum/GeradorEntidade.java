@@ -225,10 +225,15 @@ public class GeradorEntidade extends ManipulaArquivo {
 							// indica que o FK é repetida, ou seja, referencia duas vezes o mesmo conj de dados
 							continue;
 						}
-						importacaoEntidade.add(String.format("import %s.%s;", nomePacoteBase, ded.getNomeJavaClasseCompleto()));
+						importacaoEntidade.add(String.format("//import %s.%s;", nomePacoteBase, ded.getNomeJavaClasseCompleto()));
 
 						demais.append("").append("\n");
-						demais.append(String.format("\t@OneToMany(mappedBy = \"%s\")", campoExportado.getNomeJavaPropriedade())).append("\n");
+						
+						if (campoExportado.isChaveEstrangeira()) {
+							System.out.println("analisar");
+						}
+						
+						demais.append(String.format("//\t@OneToMany(mappedBy = \"%s\")", campoExportado.getNomeJavaPropriedade())).append("\n");
 						String nomeTipo = usarReferenciaCompleta ? String.format("%s.%s", nomePacoteBase, ded.getNomeJavaClasseCompleto()) : ded.getNomeJavaClasse();
 						String nomePropriedade = null;
 						if (usarNomeETipo) {
@@ -240,7 +245,7 @@ public class GeradorEntidade extends ManipulaArquivo {
 							nomePropriedade = String.format("%s%s", nomePropriedade, primeiraLetra(ded.getNomeJavaClasseCompleto().replaceAll("\\.", ""), true));
 						}
 						nomePropriedade = String.format("%sList", primeiraLetra(nomePropriedade, false));						
-						demais.append(String.format("\tprivate List<%s> %s;", nomeTipo, nomePropriedade)).append("\n");
+						demais.append(String.format("//\tprivate List<%s> %s;", nomeTipo, nomePropriedade)).append("\n");
 					}
 				}
 				
