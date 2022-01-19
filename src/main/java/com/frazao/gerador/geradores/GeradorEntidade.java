@@ -1,4 +1,4 @@
-package com.frazao.gerador.comum;
+package com.frazao.gerador.geradores;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -10,6 +10,10 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.frazao.gerador.GerarSistema;
+import com.frazao.gerador.entidade.DefinicaoEstruturaDados;
+import com.frazao.gerador.entidade.DefinicaoTabela;
+import com.frazao.gerador.entidade.InformacaoConexao;
+import com.frazao.gerador.util.ManipulaArquivo;
 
 public class GeradorEntidade extends ManipulaArquivo {
 

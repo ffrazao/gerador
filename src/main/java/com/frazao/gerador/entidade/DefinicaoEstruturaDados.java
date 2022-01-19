@@ -1,4 +1,4 @@
-package com.frazao.gerador.comum;
+package com.frazao.gerador.entidade;
 
 import java.util.Comparator;
 import java.util.HashMap;

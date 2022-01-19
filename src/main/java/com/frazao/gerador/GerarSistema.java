@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.frazao.gerador.comum.DefinicaoTabela;
-import com.frazao.gerador.comum.InformacaoConexao;
+import com.frazao.gerador.entidade.DefinicaoTabela;
+import com.frazao.gerador.entidade.InformacaoConexao;
 
 @Service
 public interface GerarSistema {

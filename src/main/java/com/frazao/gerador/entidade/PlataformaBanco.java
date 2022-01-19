@@ -1,4 +1,4 @@
-package com.frazao.gerador.comum;
+package com.frazao.gerador.entidade;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;

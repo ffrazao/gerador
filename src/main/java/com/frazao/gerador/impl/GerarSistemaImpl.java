@@ -16,14 +16,14 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.frazao.gerador.GerarSistema;
-import com.frazao.gerador.comum.BancoDados;
-import com.frazao.gerador.comum.ConteudoEstatico;
-import com.frazao.gerador.comum.Definicao;
-import com.frazao.gerador.comum.DefinicaoEstruturaDados;
-import com.frazao.gerador.comum.DefinicaoTabela;
-import com.frazao.gerador.comum.GeradorEntidade;
-import com.frazao.gerador.comum.InformacaoConexao;
-import com.frazao.gerador.comum.ManipulaArquivo;
+import com.frazao.gerador.entidade.BancoDados;
+import com.frazao.gerador.entidade.Definicao;
+import com.frazao.gerador.entidade.DefinicaoEstruturaDados;
+import com.frazao.gerador.entidade.DefinicaoTabela;
+import com.frazao.gerador.entidade.InformacaoConexao;
+import com.frazao.gerador.geradores.ConteudoEstatico;
+import com.frazao.gerador.geradores.GeradorEntidade;
+import com.frazao.gerador.util.ManipulaArquivo;
 
 import lombok.Data;
 import lombok.Getter;
@@ -54,12 +54,13 @@ public class GerarSistemaImpl implements GerarSistema {
 		StringBuilder applicationYml = new StringBuilder();
 
 		String pacoteInicial = String.format("%s.%s", this.getPacotePadrao(), this.getNomeSistema());
+		InformacaoConexao informacaoConexao = null;
 
 		int cont = 0;
 		for (Entry<InformacaoConexao, List<DefinicaoTabela>> informacaoConexaoEntry : this.informacaoConexaoMap
 				.entrySet()) {
 			cont++;
-			InformacaoConexao informacaoConexao = informacaoConexaoEntry.getKey();
+			informacaoConexao = informacaoConexaoEntry.getKey();
 
 			String nomeBanco = informacaoConexao.getNomeBanco();
 			String nomePacoteLocal = String.format("%s.%s.%s", pacoteInicial,
@@ -79,12 +80,16 @@ public class GerarSistemaImpl implements GerarSistema {
 			applicationYml.append("  lazyInitialization: true").append("\n");
 			applicationYml.append("  initialization-mode: \"never\"").append("\n");
 			applicationYml.append("  initializationMode: \"never\"").append("\n");
+			applicationYml.append("  continue-on-error: true").append("\n");
 			applicationYml.append("  continueOnError: true").append("\n");
-		    applicationYml.append("  initialize: false").append("\n");
-		    applicationYml.append("  initialSize: 0").append("\n");
-		    applicationYml.append("  timeBetweenEvictionRunsMillis: 5000").append("\n");
-		    applicationYml.append("  minEvictableIdleTimeMillis: 5000").append("\n");
-		    applicationYml.append("  minIdle: 0").append("\n");
+			applicationYml.append("  initialize: false").append("\n");
+			applicationYml.append("  initialSize: 0").append("\n");
+			applicationYml.append("  time-between-eviction-runs-millis: 5000").append("\n");
+			applicationYml.append("  timeBetweenEvictionRunsMillis: 5000").append("\n");
+			applicationYml.append("  min-evictable-idle-time-millis: 5000").append("\n");
+			applicationYml.append("  minEvictableIdleTimeMillis: 5000").append("\n");
+			applicationYml.append("  min-idle: 0").append("\n");
+			applicationYml.append("  minIdle: 0").append("\n");
 			applicationYml.append("  driverClassName: \"").append(informacaoConexao.getDriver()).append("\"\n");
 			applicationYml.append("  jdbcUrl: \"").append(informacaoConexao.getUrl()).append("\"\n");
 			applicationYml.append("  username: \"").append(informacaoConexao.getUsername()).append("\"\n");
@@ -93,19 +98,44 @@ public class GerarSistemaImpl implements GerarSistema {
 			switch (informacaoConexao.getPlataformaBanco()) {
 			case POSTGRES:
 				applicationYml.append("   dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
-				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.PostgreSQL10Dialect\"")
+						.append("\n");
 				break;
 			case MYSQL:
 				applicationYml.append("   dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
 				applicationYml.append("   databasePlatform: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
 				break;
 			}
+			applicationYml.append("   generate-ddl: false").append("\n");
 			applicationYml.append("   show-sql: true").append("\n");
 			applicationYml.append("   use_sql_comments: true").append("\n");
 			applicationYml.append("   hibernate:").append("\n");
+			switch (informacaoConexao.getPlataformaBanco()) {
+			case POSTGRES:
+				applicationYml.append("    dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+				break;
+			case MYSQL:
+				applicationYml.append("    dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+				break;
+			}
 			applicationYml.append("    ddl-auto: \"none\"").append("\n");
 			applicationYml.append("    useSqlComments: true").append("\n");
 			applicationYml.append("    formatSql: true").append("\n");
+			applicationYml.append("   properties:").append("\n");
+			applicationYml.append("    hibernate:").append("\n");
+			switch (informacaoConexao.getPlataformaBanco()) {
+			case POSTGRES:
+				applicationYml.append("     dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+				break;
+			case MYSQL:
+				applicationYml.append("     dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+				break;
+			}
+			applicationYml.append("     useSqlComments: true").append("\n");
+			applicationYml.append("     formatSql: true").append("\n");
+			applicationYml.append("     temp:").append("\n");
+			applicationYml.append("      use_jdbc_metadata_defaults: false").append("\n");
+
 			applicationYml.append("\n");
 
 			StringBuilder configDb = new StringBuilder();
@@ -130,7 +160,7 @@ public class GerarSistemaImpl implements GerarSistema {
 			configDb.append("public class ").append(nomeClasse).append(" {").append("\n");
 			configDb.append("").append("\n");
 			configDb.append("\t@Bean").append("\n");
-			if (cont == 1) {				
+			if (cont == 1) {
 				configDb.append("\t@Primary").append("\n");
 			}
 			configDb.append("\t@ConfigurationProperties(prefix = \"").append(nomeBanco).append(".datasource\")")
@@ -140,7 +170,7 @@ public class GerarSistemaImpl implements GerarSistema {
 			configDb.append("\t}").append("\n");
 			configDb.append("").append("\n");
 			configDb.append("\t@Bean").append("\n");
-			if (cont == 1) {				
+			if (cont == 1) {
 				configDb.append("\t@Primary").append("\n");
 			}
 			configDb.append("\tpublic LocalContainerEntityManagerFactoryBean ").append(nomeMetodoEntityManager)
@@ -161,39 +191,39 @@ public class GerarSistemaImpl implements GerarSistema {
 		}
 
 		applicationYml.append("spring:").append("\n");
-		applicationYml.append(" datasource:").append("\n");		
-		applicationYml.append("  initialization-mode: \"never\"").append("\n");
-		applicationYml.append("  initializationMode: \"never\"").append("\n");
+		applicationYml.append(" sql:").append("\n");
+		applicationYml.append("  init:").append("\n");
+		applicationYml.append("   mode: \"never\"").append("\n");
 		applicationYml.append(" main:").append("\n");
 		applicationYml.append("  lazy-initialization: true").append("\n");
 		applicationYml.append("  lazyInitialization: true").append("\n");
-		applicationYml.append("  continueOnError: true").append("\n");
-	    applicationYml.append("  initialize: false").append("\n");
-	    applicationYml.append("  initialSize: 0").append("\n");
-	    applicationYml.append("  timeBetweenEvictionRunsMillis: 5000").append("\n");
-	    applicationYml.append("  minEvictableIdleTimeMillis: 5000").append("\n");
-	    applicationYml.append("  minIdle: 0").append("\n");
 		applicationYml.append("  allow-bean-definition-overriding: true").append("\n");
 		applicationYml.append(" jpa:").append("\n");
 		applicationYml.append("  generate-ddl: false").append("\n");
 		applicationYml.append("  show-sql: true").append("\n");
 		applicationYml.append("  hibernate:").append("\n");
+		switch (informacaoConexao.getPlataformaBanco()) {
+		case POSTGRES:
+			applicationYml.append("   dialect: \"org.hibernate.dialect.PostgreSQL10Dialect\"").append("\n");
+			break;
+		case MYSQL:
+			applicationYml.append("   dialect: \"org.hibernate.dialect.MySQL8Dialect\"").append("\n");
+			break;
+		}
 		applicationYml.append("   ddl-auto: \"none\"").append("\n");
-		applicationYml.append("   hbm2ddl:").append("\n");
-		applicationYml.append("    auto: \"none\"").append("\n");
-		applicationYml.append("   temp:").append("\n");
-        applicationYml.append("    use_jdbc_metadata_defaults: false").append("\n");
 		applicationYml.append("  properties:").append("\n");
 		applicationYml.append("   hibernate:").append("\n");
 		applicationYml.append("    useSqlComments: true").append("\n");
 		applicationYml.append("    formatSql: true").append("\n");
+		applicationYml.append("    temp:").append("\n");
+		applicationYml.append("     use_jdbc_metadata_defaults: false").append("\n");
 		applicationYml.append("").append("\n");
-		
+
 		applicationYml.append("logging:").append("\n");
 		applicationYml.append(" level:").append("\n");
 		applicationYml.append("  root: \"ERROR\"").append("\n");
 		applicationYml.append(String.format("  %s: \"DEBUG\"", this.pacotePadrao)).append("\n");
-			   
+
 		ManipulaArquivo.salvarArquivo(
 				new File(this.getLocalSaida() + (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
 						+ GerarSistema.DIRETORIO_FONTE_RESOUCES),
@@ -218,35 +248,41 @@ public class GerarSistemaImpl implements GerarSistema {
 
 	@Override
 	public GerarSistema construirRepositorio() throws Exception {
-		
+
 		String pacoteInicial = String.format("%s.%s", this.getPacotePadrao(), this.getNomeSistema());
 
 		construirBancoDadosConfig(pacoteInicial);
 
-		for (Entry<InformacaoConexao, List<DefinicaoTabela>> informacaoConexaoEntry : this.informacaoConexaoMap.entrySet()) {
+		for (Entry<InformacaoConexao, List<DefinicaoTabela>> informacaoConexaoEntry : this.informacaoConexaoMap
+				.entrySet()) {
 			InformacaoConexao informacaoConexao = informacaoConexaoEntry.getKey();
 
 			for (DefinicaoTabela dt : informacaoConexaoEntry.getValue()) {
-				
+
 				Set<String> importacaoBasica = new TreeSet<>();
 				String nomeBanco = informacaoConexao.getNomeBanco();
 				String nomeEntidade = dt.getNomeJavaClasse();
 				String nomeClasse = String.format("%sDAO", nomeEntidade);
-				String nomePacoteEntidade = String.format("%s.%s", pacoteInicial, String.format(NOME_PACOTE_ENTIDADE, nomeBanco));
-				String nomePacoteRepositorio = String.format("%s.%s.%s", pacoteInicial, String.format(NOME_PACOTE_DAO, nomeBanco), dt.getNomeJavaPacote());
-				
+				String nomePacoteEntidade = String.format("%s.%s", pacoteInicial,
+						String.format(NOME_PACOTE_ENTIDADE, nomeBanco));
+				String nomePacoteRepositorio = String.format("%s.%s.%s", pacoteInicial,
+						String.format(NOME_PACOTE_DAO, nomeBanco), dt.getNomeJavaPacote());
+
 				importacaoBasica.add("import org.springframework.data.jpa.repository.JpaRepository;");
-				importacaoBasica.add(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()));
-				
+				importacaoBasica
+						.add(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()));
+
 				String tipoId = null;
-				
+
 				if (dt.isChavePrimariaComposta()) {
 					tipoId = String.format("%sId", dt.getNomeJavaClasse());
-					importacaoBasica.add(String.format("import %s.%sId;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()));
+					importacaoBasica
+							.add(String.format("import %s.%sId;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()));
 				} else {
 					DefinicaoEstruturaDados ded = dt.getChavePrimariaList().stream().findFirst().get();
 					if (ded.isChaveEstrangeira()) {
-						importacaoBasica.add(String.format("import %s.%s;", nomePacoteEntidade, ded.getReferencia().getNomeJavaClasseCompleto()));
+						importacaoBasica.add(String.format("import %s.%s;", nomePacoteEntidade,
+								ded.getReferencia().getNomeJavaClasseCompleto()));
 						tipoId = ded.getReferencia().getNomeJavaClasse();
 					} else {
 						tipoId = ded.getTipoPropriedade();
@@ -257,9 +293,13 @@ public class GerarSistemaImpl implements GerarSistema {
 				StringBuilder java = new StringBuilder();
 				java.append("package ").append(nomePacoteRepositorio).append(";\n");
 				java.append("").append("\n");
-				java.append(importacaoBasica.stream().sorted().map(Object::toString).collect(Collectors.joining("\n"))).append("\n").append("\n");
+				java.append(importacaoBasica.stream().sorted().map(Object::toString).collect(Collectors.joining("\n")))
+						.append("\n").append("\n");
 				java.append("").append("\n");
-				java.append("public interface ").append(nomeClasse).append(String.format(" extends JpaRepository<%s, %s>, %s {", nomeEntidade, tipoId, String.format("%sDAOFiltro", nomeEntidade))).append("\n");
+				java.append("public interface ").append(nomeClasse)
+						.append(String.format(" extends JpaRepository<%s, %s>, %s {", nomeEntidade, tipoId,
+								String.format("%sDAOFiltro", nomeEntidade)))
+						.append("\n");
 				java.append("").append("\n");
 				java.append("}").append("\n");
 
@@ -268,10 +308,10 @@ public class GerarSistemaImpl implements GerarSistema {
 								+ (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
 								+ GerarSistema.DIRETORIO_FONTE_JAVA),
 						nomePacoteRepositorio, nomeClasse, java.toString());
-				
+
 				// CONSULTA PERSONALIZADA
 				nomeClasse = String.format("%sDAOFiltro", nomeEntidade);
-				
+
 				java = new StringBuilder();
 				java.append("package ").append(nomePacoteRepositorio).append(";\n");
 				java.append("").append("\n");
@@ -279,49 +319,55 @@ public class GerarSistemaImpl implements GerarSistema {
 				java.append("").append("\n");
 //				import br.gov.df.seagri.migracao.banco_dados._comum.dao.DAOFiltro;
 //				import br.gov.df.seagri.migracao.banco_dados._comum.dto.DTOFiltro;
-				
-				java.append(String.format("import %s.%s.DAOFiltro;", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_DAO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
-				java.append(String.format("import %s.%s.DTOFiltro;", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
+
+				java.append(String.format("import %s.%s.DAOFiltro;", pacoteInicial,
+						String.format(GerarSistema.NOME_PACOTE_DAO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
+				java.append(String.format("import %s.%s.DTOFiltro;", pacoteInicial,
+						String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
 				java.append("").append("\n");
 
-				java.append(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto())).append("\n");
+				java.append(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()))
+						.append("\n");
 				java.append("").append("\n");
 				java.append("public interface ").append(nomeClasse)
-						.append(String.format(" extends DAOFiltro<%s, %s> {", nomeEntidade, "DTOFiltro"))
-						.append("\n");
+						.append(String.format(" extends DAOFiltro<%s, %s> {", nomeEntidade, "DTOFiltro")).append("\n");
 				java.append("").append("\n");
 				java.append(String.format("\tCollection<%s> filtrar(DTOFiltro f);", nomeEntidade)).append("\n");
 				java.append("").append("\n");
 				java.append("}").append("\n");
-				
+
 				ManipulaArquivo.salvarArquivoJava(
 						new File(this.getLocalSaida()
 								+ (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
 								+ GerarSistema.DIRETORIO_FONTE_JAVA),
 						nomePacoteRepositorio, nomeClasse, java.toString());
-				
+
 				// IMPLEMENTAÇÃO DA CONSULTA PERSONALIZADA
 				nomeClasse = String.format("%sDAOFiltroImpl", nomeEntidade);
-				
-				
+
 				java = new StringBuilder();
 				java.append("package ").append(nomePacoteRepositorio + ".impl").append(";\n");
 				java.append("").append("\n");
 				java.append("import java.util.Collection;").append("\n");
 				java.append("").append("\n");
-				java.append(String.format("import %s.%sDAOFiltro;", nomePacoteRepositorio, dt.getNomeJavaClasse())).append("\n");
-				java.append(String.format("import %s.%s.DTOFiltro;", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
+				java.append(String.format("import %s.%sDAOFiltro;", nomePacoteRepositorio, dt.getNomeJavaClasse()))
+						.append("\n");
+				java.append(String.format("import %s.%s.DTOFiltro;", pacoteInicial,
+						String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM))).append("\n");
 				java.append("").append("\n");
-				java.append(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto())).append("\n");
+				java.append(String.format("import %s.%s;", nomePacoteEntidade, dt.getNomeJavaClasseCompleto()))
+						.append("\n");
 				java.append("").append("\n");
-				java.append("public class ").append(nomeClasse).append(String.format(" implements %sDAOFiltro {", dt.getNomeJavaClasse())) .append("\n");
+				java.append("public class ").append(nomeClasse)
+						.append(String.format(" implements %sDAOFiltro {", dt.getNomeJavaClasse())).append("\n");
 				java.append("").append("\n");
 				java.append("\t@Override").append("\n");
-				
-				java.append(String.format("\tpublic Collection<%s> filtrar(DTOFiltro f) {return null;}", nomeEntidade)).append("\n");
+
+				java.append(String.format("\tpublic Collection<%s> filtrar(DTOFiltro f) {return null;}", nomeEntidade))
+						.append("\n");
 				java.append("").append("\n");
 				java.append("}").append("\n");
-				
+
 				ManipulaArquivo.salvarArquivoJava(
 						new File(this.getLocalSaida()
 								+ (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
@@ -331,16 +377,18 @@ public class GerarSistemaImpl implements GerarSistema {
 			}
 
 		}
-		
+
 		// ajustar a importação do arquivo DTOFiltro no arquiv DAOFiltro
-		
+
 		// /saida/src/main/java/br/gov/df/seagri/migracao/entidade/Entidade.java
-		String classeDTOFiltro = String.format("%s.%s.DTOFiltro", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM));
-		String classeDAOFiltro = String.format("%s.%s.DAOFiltro", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_DAO, GerarSistema.NOME_PACOTE_COMUM));
-		File daoFiltroFile = new File(this.getLocalSaida()
-				+ (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
-				+ GerarSistema.DIRETORIO_FONTE_JAVA + File.separator +
-				classeDAOFiltro.replaceAll("\\.", File.separator) + ".java");
+		String classeDTOFiltro = String.format("%s.%s.DTOFiltro", pacoteInicial,
+				String.format(GerarSistema.NOME_PACOTE_DTO, GerarSistema.NOME_PACOTE_COMUM));
+		String classeDAOFiltro = String.format("%s.%s.DAOFiltro", pacoteInicial,
+				String.format(GerarSistema.NOME_PACOTE_DAO, GerarSistema.NOME_PACOTE_COMUM));
+		File daoFiltroFile = new File(
+				this.getLocalSaida() + (this.getLocalSaida().endsWith(File.separator) ? "" : File.separator)
+						+ GerarSistema.DIRETORIO_FONTE_JAVA + File.separator
+						+ classeDAOFiltro.replaceAll("\\.", File.separator) + ".java");
 		Charset charset = StandardCharsets.UTF_8;
 		Path path = Paths.get(daoFiltroFile.getPath());
 		String content = new String(Files.readAllBytes(path), charset);
@@ -374,15 +422,15 @@ public class GerarSistemaImpl implements GerarSistema {
 			conteudo.append("import org.springframework.transaction.PlatformTransactionManager;").append("\n");
 			conteudo.append("import org.springframework.transaction.annotation.EnableTransactionManagement;")
 					.append("\n");
-			conteudo.append("import org.springframework.transaction.jta.JtaTransactionManager;").append("\n");
+			conteudo.append("import org.springframework.orm.jpa.JpaTransactionManager;").append("\n");
 			conteudo.append("").append("\n");
 			conteudo.append("@EnableTransactionManagement").append("\n");
 			conteudo.append("@Configuration").append("\n");
 			conteudo.append(String.format("public class %s {", nomeClasseBancoDados)).append("\n");
 			conteudo.append("").append("\n");
-			conteudo.append("\t@Bean").append("\n");
-			conteudo.append("\tpublic PlatformTransactionManager platformTransactionManager() {").append("\n");
-			conteudo.append("\t\treturn new JtaTransactionManager();").append("\n");
+			conteudo.append("\t@Bean(\"transactionManager\")").append("\n");
+			conteudo.append("\tpublic PlatformTransactionManager transactionManager() {").append("\n");
+			conteudo.append("\t\treturn new JpaTransactionManager();").append("\n");
 			conteudo.append("\t}").append("\n");
 			conteudo.append("").append("\n");
 			conteudo.append("}").append("\n");

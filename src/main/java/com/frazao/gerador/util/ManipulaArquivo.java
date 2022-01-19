@@ -1,4 +1,4 @@
-package com.frazao.gerador.comum;
+package com.frazao.gerador.util;
 
 import java.io.File;
 import java.io.FileInputStream;

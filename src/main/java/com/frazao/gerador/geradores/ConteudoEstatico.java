@@ -1,4 +1,4 @@
-package com.frazao.gerador.comum;
+package com.frazao.gerador.geradores;
 
 import java.io.File;
 import java.net.URL;
@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 import com.frazao.gerador.GerarSistema;
+import com.frazao.gerador.util.ManipulaArquivo;
 
 public class ConteudoEstatico extends ManipulaArquivo {
 
