@@ -63,4 +63,10 @@ public interface GerarSistema {
 
 	void setPacotePadrao(String pacotePadrao);
 
+	void interfacesEspeciais(String tabela, String ...interfaceEspecial);
+
+	List<String> getInterfacesEspeciais(String tabela);
+	
+	List<String> getInterfacesEspeciais();
+
 }

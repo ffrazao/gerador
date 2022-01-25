@@ -114,6 +114,7 @@ public class DefinicaoEstruturaDados extends Definicao implements Comparable<Def
 			case "smallserial":
 			case "serial":
 			case "bigserial":
+			case "\"core\".\"id\"": 
 				return "Integer";
 			case "decimal":
 			case "numeric":

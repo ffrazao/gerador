@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,8 @@ public class GerarSistemaImpl implements GerarSistema {
 	private String nomeSistema;
 
 	private String pacotePadrao;
+	
+	private Map<String, List<String>> interfaceEspecial = new HashMap<>();
 
 	@Override
 	public GerarSistema carregarDefinicaoTabelaList() throws Exception {
@@ -463,6 +467,21 @@ public class GerarSistemaImpl implements GerarSistema {
 			List<String> adicionaFiltroList, List<String> excluiFiltroList) {
 		this.addInformacaoConexao(new InformacaoConexao(nomeBanco, driver, url, username, password, adicionaFiltroList,
 				excluiFiltroList));
+	}
+
+	@Override
+	public void interfacesEspeciais(String tabela, String ...interfaceEspecial) {
+		this.interfaceEspecial.put(tabela, Arrays.asList(interfaceEspecial));
+	}
+
+	@Override
+	public List<String> getInterfacesEspeciais(String tabela) {
+		return this.interfaceEspecial.get(tabela);
+	}
+
+	@Override
+	public List<String> getInterfacesEspeciais() {
+		return new ArrayList<>(this.interfaceEspecial.keySet());
 	}
 
 }

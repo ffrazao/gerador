@@ -52,10 +52,13 @@ public class GeradorEntidade extends ManipulaArquivo {
 				
 				StringBuilder declaracaoClasse = new StringBuilder();
 				declaracaoClasse.append(String.format("@Data")).append("\n");
+				declaracaoClasse.append(String.format("@Builder")).append("\n");
+				declaracaoClasse.append(String.format("@NoArgsConstructor")).append("\n");
+				declaracaoClasse.append(String.format("@AllArgsConstructor")).append("\n");
 				declaracaoClasse.append(String.format("@Entity%s", nomeEntidadeDuplicada(dt))).append("\n");
 				//declaracaoClasse.append(String.format("@Table(%s = \"%s\", name = \"%s\")", informacaoConexaoMapa.getKey().getPlataformaBanco() == PlataformaBanco.POSTGRES ? "catalog" : "schema", dt.getEsquema(), dt.getTabela())).append("\n");
 				declaracaoClasse.append(String.format("@Table(%s = \"%s\", name = \"%s\")", "schema", dt.getEsquema(), dt.getTabela())).append("\n");
-				declaracaoClasse.append(String.format("public class %s %s %s {", dt.getNomeJavaClasse(), "implements", "EntidadeBase")).append("\n");
+				declaracaoClasse.append(String.format("public class %s %s %s {", dt.getNomeJavaClasse(), "implements", declararInterfaceEspecial(dt))).append("\n");
 
 				// escrever campos
 				
@@ -133,7 +136,7 @@ public class GeradorEntidade extends ManipulaArquivo {
 					id.append("\t@Id").append("\n");
 					if (primeiraDed.isChaveEstrangeira()) {
 						if (primeiraDed.getReferencia().getEsquema().equals(dt.getEsquema()) && primeiraDed.getReferencia().getTabela().equals(dt.getTabela())) {
-							id.append("\t@GeneratedValue(strategy = GenerationType.SEQUENCE)").append("\n");
+							id.append("\t@GeneratedValue(strategy = GenerationType.IDENTITY)").append("\n");
 							id.append(String.format("\t@Column(name = \"%s\")", primeiraDed.getColuna())).append("\n");
 							id.append(String.format("\tprivate %s %s;", "Long"/*primeiraDed.getTipoPropriedade()*/, primeiraDed.getNomeJavaPropriedade())).append("\n");
 						} else {
@@ -162,7 +165,7 @@ public class GeradorEntidade extends ManipulaArquivo {
 							importacaoEntidade.add(String.format("import %s.%s;", nomePacoteBase, primeiraDed.getReferencia().getNomeJavaClasseCompleto()));
 						}
 					} else {
-						id.append("\t@GeneratedValue(strategy = GenerationType.SEQUENCE)").append("\n");
+						id.append("\t@GeneratedValue(strategy = GenerationType.IDENTITY)").append("\n");
 						id.append(String.format("\t@Column(name = \"%s\")", primeiraDed.getColuna())).append("\n");
 						id.append(String.format("\tprivate %s %s;", primeiraDed.getTipoPropriedade(), primeiraDed.getNomeJavaPropriedade())).append("\n");
 					}
@@ -209,7 +212,14 @@ public class GeradorEntidade extends ManipulaArquivo {
 					
 					Set<DefinicaoEstruturaDados> campoExportadoSet = new HashSet<>();
 					for (DefinicaoEstruturaDados ded : dt.getDadosAcessorios()) {
-						DefinicaoTabela tabRef = this.getDefnicaoTabela(informacaoConexaoMapa.getValue(), ded.getEsquema(), ded.getTabela());
+						DefinicaoTabela tabRef = null;
+						try {
+							tabRef = this.getDefnicaoTabela(informacaoConexaoMapa.getValue(), ded.getEsquema(), ded.getTabela());
+						} catch (IllegalArgumentException e) {
+							//e.printStackTrace();
+							// throw e;
+							continue;
+						}
 						DefinicaoEstruturaDados campoExportado = null;
 						
 						// verificar se a classe é referenciada mais de uma vez
@@ -261,6 +271,14 @@ public class GeradorEntidade extends ManipulaArquivo {
 				java.append("\tprivate static final long serialVersionUID = 1L;").append("\n");
 				java.append(id).append("\n");
 				java.append(demais).append("\n").append("\n");
+				
+				List<String> interfaceEspecial = this.gerarSistema.getInterfacesEspeciais(String.format("%s.%s", dt.getEsquema(), dt.getTabela()));
+				if (interfaceEspecial != null) {
+					java.append(String.format("\t@Column(name = \"%s\")", "sidagro")).append("\n");
+					java.append("\tprivate String sidagro;").append("\n");
+					java.append("").append("\n");
+				}
+				
 				java.append("}").append("\n").append("\n");
 
 				File arquivo = new File(this.gerarSistema.getLocalSaida()
@@ -274,6 +292,23 @@ public class GeradorEntidade extends ManipulaArquivo {
 			}
 			// excluir os arquivos q não foram atualizados
 		}
+		
+	}
+
+
+	private String declararInterfaceEspecial(DefinicaoTabela dt) {
+			
+		StringBuilder sb = new StringBuilder("EntidadeBase");
+		
+		List<String> interfaceEspecial = this.gerarSistema.getInterfacesEspeciais(String.format("%s.%s", dt.getEsquema(), dt.getTabela())); 
+		
+		if (interfaceEspecial != null) {
+			sb.append(", ");
+			sb.append(interfaceEspecial.stream().map(ie -> String.format("%s.%s.%s", pacoteInicial, String.format(GerarSistema.NOME_PACOTE_ENTIDADE, GerarSistema.NOME_PACOTE_COMUM), ie.toString()) ).collect(Collectors.joining(", "))
+			);
+		}
+
+		return sb.toString();
 	}
 
 	private String primeiraLetra(String palavra, boolean maiuscula) {
@@ -283,7 +318,13 @@ public class GeradorEntidade extends ManipulaArquivo {
 	private DefinicaoTabela getDefnicaoTabela(List<DefinicaoTabela> dtList, String esquema, String tabela) {
 		return dtList.stream().filter(v1 -> {
 			return v1.getEsquema().equals(esquema) && v1.getTabela().equals(tabela);
-		}).findFirst().get();
+		}).findFirst().orElseThrow(() -> {
+			
+			
+			
+			throw new IllegalArgumentException(String.format("Informacoes não encontradas [\"%s.%s\",]", esquema, tabela));
+		}
+		);
 	}
 
 	private String nomeEntidadeDuplicada(DefinicaoTabela dt) {
